@@ -1,19 +1,18 @@
 import 'package:firebaseloginbloc/events/login_event.dart';
 import 'package:firebaseloginbloc/events/register_event.dart';
 import 'package:firebaseloginbloc/repositories/user_repository.dart';
-import 'package:firebaseloginbloc/states/login_state.dart';
 import 'package:firebaseloginbloc/states/register_state.dart';
 import 'package:firebaseloginbloc/validators/validators.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
 
-class RegisterBloc extends Bloc<LoginEvent, LoginState> {
+class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   UserRepository _userRepository;
 
   RegisterBloc({required UserRepository userRepository})
       : assert(userRepository != null),
         _userRepository = userRepository,
-        super(LoginState.initial());
+        super(RegisterState.initial());
 
   @override
   Stream<Transition<RegisterEvent, RegisterState>> transformEvents(
@@ -28,34 +27,35 @@ class RegisterBloc extends Bloc<LoginEvent, LoginState> {
       return (registerEvent is! RegisterEventEmailChanged &&
           registerEvent is! RegisterEventPasswordChanged);
     });
-    return super.transformEvents(nonDebounceStream.mergeWith([debounceStream]), transitionFn);
+    return super.transformEvents(
+        nonDebounceStream.mergeWith([debounceStream]), transitionFn);
   }
 
   @override
-  Stream<LoginState> mapEventToState(LoginEvent loginEvent) async* {
-    final loginState = state;
-    if (loginEvent is LoginEventEmailChanged) {
-      yield loginState.cloneAndUpdate(
-          isValidEmail: Validators.isValidEmail(loginEvent.email),
-          isValidPassword: loginEvent.email);
-    } else if (loginEvent is LoginEventPasswordChanged) {
-      yield loginState.cloneAndUpdate(
-          isValidEmail: null, isValidPassword: isValidPassword)
-    } else if (loginEvent is LoginEventWithGoogleChanged) {
+  Stream<RegisterState> mapEventToState(RegisterEvent registerEvent) async* {
+    final registerState = state;
+    if (registerEvent is RegisterEventEmailChanged) {
+      yield registerState.cloneAndUpdate(
+          isValidEmail: Validators.isValidEmail(registerEvent.email),
+          isValidPassword: true);
+    } else if (registerEvent is RegisterEventPasswordChanged) {
+      yield registerState.cloneAndUpdate(
+          isValidEmail: true,
+          isValidPassword: Validators.isValidPassword(registerEvent.password));
+    } else if (registerEvent is LoginEventWithGoogleChanged) {
       try {
         await _userRepository.signInWithGoogle();
-        yield LoginState.success();
+        yield RegisterState.success();
       } catch (_) {
-        yield LoginState.failure();
+        yield RegisterState.failure();
       }
-    }
-    else if (loginEvent is LoginEventWithEmailAndPasswordPressed) {
+    } else if (registerEvent is RegisterEventPressed) {
       try {
         await _userRepository.signInWithEmailAndPassword(
-            loginEvent.email, loginEvent.password);
-        yield LoginState.success();
+            registerEvent.email, registerEvent.password);
+        yield RegisterState.success();
       } catch (_) {
-        yield LoginState.failure();
+        yield RegisterState.failure();
       }
     }
   }

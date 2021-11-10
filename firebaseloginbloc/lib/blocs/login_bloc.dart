@@ -36,10 +36,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     if (loginEvent is LoginEventEmailChanged) {
       yield loginState.cloneAndUpdate(
           isValidEmail: Validators.isValidEmail(loginEvent.email),
-          isValidPassword: loginEvent.email);
+          isValidPassword: true);
     } else if (loginEvent is LoginEventPasswordChanged) {
       yield loginState.cloneAndUpdate(
-          isValidEmail: null, isValidPassword: isValidPassword)
+          isValidEmail: true, isValidPassword: true);
     } else if (loginEvent is LoginEventWithGoogleChanged) {
       try {
         await _userRepository.signInWithGoogle();
