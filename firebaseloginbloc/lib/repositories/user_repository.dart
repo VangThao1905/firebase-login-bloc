@@ -2,13 +2,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class UserRepository {
-  late final FirebaseAuth _firebaseAuth;
-  late final GoogleSignIn _googleSignIn;
+  final FirebaseAuth _firebaseAuth;
+  final GoogleSignIn _googleSignIn;
 
-  // UserRepository(
-  //     {required FirebaseAuth firebaseAuth, required GoogleSignIn googleSignIn})
-  //     : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-  //       _googleSignIn = googleSignIn ?? GoogleSignIn();
+  UserRepository({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
+      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
+        _googleSignIn = googleSignIn ??
+            GoogleSignIn(scopes: <String>[
+              'email',
+              'https://www.googleapis.com/auth/contacts.readonly'
+            ]);
 
   Future<User?> signInWithGoogle() async {
     final GoogleSignInAccount? googleSignInAccount =
@@ -16,8 +19,8 @@ class UserRepository {
     final GoogleSignInAuthentication googleSignInAuthentication =
         await googleSignInAccount!.authentication;
     final AuthCredential authCredential = GoogleAuthProvider.credential(
-        idToken: googleSignInAuthentication.accessToken,
-        accessToken: googleSignInAuthentication.idToken);
+        idToken: googleSignInAuthentication.idToken,
+        accessToken: googleSignInAuthentication.accessToken);
     await _firebaseAuth.signInWithCredential(authCredential);
     final currentUser = _firebaseAuth.currentUser;
     return currentUser;

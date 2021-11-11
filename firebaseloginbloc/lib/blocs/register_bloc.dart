@@ -42,7 +42,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       yield registerState.cloneAndUpdate(
           isValidEmail: true,
           isValidPassword: Validators.isValidPassword(registerEvent.password));
-    } else if (registerEvent is LoginEventWithGoogleChanged) {
+    } else if (registerEvent is RegisterEventWithGoogleChanged) {
       try {
         await _userRepository.signInWithGoogle();
         yield RegisterState.success();
@@ -51,7 +51,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       }
     } else if (registerEvent is RegisterEventPressed) {
       try {
-        await _userRepository.signInWithEmailAndPassword(
+        await _userRepository.createUserWithEmailAndPassword(
             registerEvent.email, registerEvent.password);
         yield RegisterState.success();
       } catch (_) {

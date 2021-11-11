@@ -1,65 +1,64 @@
 import 'package:firebaseloginbloc/blocs/authentication_bloc.dart';
-import 'package:firebaseloginbloc/blocs/login_bloc.dart';
+import 'package:firebaseloginbloc/blocs/register_bloc.dart';
 import 'package:firebaseloginbloc/events/authentication_event.dart';
-import 'package:firebaseloginbloc/events/login_event.dart';
-import 'package:firebaseloginbloc/pages/buttons/google_login_button.dart';
-import 'package:firebaseloginbloc/pages/buttons/login_button.dart';
-import 'package:firebaseloginbloc/pages/buttons/register_user_button.dart';
+import 'package:firebaseloginbloc/events/register_event.dart';
+import 'package:firebaseloginbloc/pages/buttons/register_button.dart';
 import 'package:firebaseloginbloc/repositories/user_repository.dart';
-import 'package:firebaseloginbloc/states/login_state.dart';
+import 'package:firebaseloginbloc/states/register_state.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class LoginPage extends StatefulWidget {
+class RegisterPage extends StatefulWidget {
   final UserRepository _userRepository;
 
-  LoginPage({Key? key, required UserRepository userRepository})
+  RegisterPage({Key? key, required UserRepository userRepository})
       : assert(userRepository != null),
         _userRepository = userRepository,
         super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _LoginPageState();
+  State<StatefulWidget> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  late LoginBloc _loginBloc;
+  late RegisterBloc _registerBloc;
 
   UserRepository get _userRepository => widget._userRepository;
 
   @override
   void initState() {
     super.initState();
-    _loginBloc = BlocProvider.of<LoginBloc>(context);
+    _registerBloc = BlocProvider.of<RegisterBloc>(context);
     _emailController.addListener(() {
-      _loginBloc.add(LoginEventEmailChanged(email: _emailController.text));
+      _registerBloc
+          .add(RegisterEventEmailChanged(email: _emailController.text));
     });
     _passwordController.addListener(() {
-      _loginBloc
-          .add(LoginEventPasswordChanged(password: _passwordController.text));
+      _registerBloc.add(
+          RegisterEventPasswordChanged(password: _passwordController.text));
     });
   }
 
   bool get isPopulated =>
       _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty;
 
-  bool isLoginButtonEnabled(LoginState loginState) =>
-      loginState.isValidEmailAndPassword &&
+  bool isRegisterButtonEnabled(RegisterState registerState) =>
+      registerState.isValidEmailAndPassword &&
       isPopulated &&
-      !loginState.isSubmitting;
+      !registerState.isSubmitting;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<LoginBloc, LoginState>(
-      builder: (context, loginState) {
-        if (loginState.isFailure) {
+    return Scaffold(body: BlocBuilder<RegisterBloc, RegisterState>(
+      builder: (context, registerState) {
+        if (registerState.isFailure) {
           print('failure');
-        } else if (loginState.isSubmitting) {
+        } else if (registerState.isSubmitting) {
           print('submitting');
-        } else if (loginState.isSuccess) {
+        } else if (registerState.isSuccess) {
           BlocProvider.of<AuthenticationBloc>(context)
               .add(AuthenticationEventLoggedIn());
         }
@@ -76,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
                   autovalidate: true,
                   autocorrect: false,
                   validator: (_) {
-                    return loginState.isValidEmail
+                    return registerState.isValidEmail
                         ? null
                         : 'Invalid email format';
                   },
@@ -89,36 +88,26 @@ class _LoginPageState extends State<LoginPage> {
                   autovalidate: true,
                   autocorrect: false,
                   validator: (_) {
-                    return loginState.isValidPassword
+                    return registerState.isValidPassword
                         ? null
                         : 'Invalid password format';
                   },
                 ),
                 Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        LoginButton(
-                            onPressed: () => isLoginButtonEnabled(loginState)
-                                ? _onLoginEmailAndPassword()
-                                : null),
-                        Padding(padding: EdgeInsets.only(top: 10)),
-                        GoogleLoginButton(),
-                        Padding(padding: EdgeInsets.only(top: 10)),
-                        RegisterUserButton(userRepository: _userRepository)
-                      ],
-                    )),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                ),
+                RegisterButton(onPressed: () {
+                  if (isRegisterButtonEnabled(registerState)) {
+                    _registerBloc.add(RegisterEventPressed(
+                        email: _emailController.text,
+                        password: _passwordController.text));
+                  }
+                }),
               ],
             ),
           ),
         );
       },
     ));
-  }
-
-  void _onLoginEmailAndPassword() {
-    _loginBloc.add(LoginEventWithEmailAndPasswordPressed(
-        email: _emailController.text, password: _passwordController.text));
   }
 }
